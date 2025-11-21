@@ -6,9 +6,7 @@ Todas las rutas (excepto `/api/auth/register` y `/api/auth/login`) requieren aut
 
 **Header requerido:**
 
-```
 Authorization: Bearer <token>
-```
 
 ---
 
@@ -427,10 +425,6 @@ DELETE /api/usuarios/:id
 - ❌ CRUD de Ingredientes
 - ❌ Gestión de Inventario
 - ❌ Gestión de Producción
-
-
-
-
 
 Backend completamente funcional:
 🔐 Autenticación:

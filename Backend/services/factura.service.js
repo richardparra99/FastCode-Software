@@ -41,14 +41,16 @@ class ServicioFactura {
    * Crear factura directamente (sin pedido previo)
    */
   async crearFacturaDirecta(datosFactura, idUsuario) {
-    const transaccion = await sequelize.transaction();
-
-    let facturaId;
+    let transaccion;
+    let factura;
+    let cliente = null; // 👈 guardamos el cliente aquí
 
     try {
+      transaccion = await sequelize.transaction();
+
       // Validar cliente
       if (datosFactura.clienteId) {
-        const cliente = await Cliente.findByPk(datosFactura.clienteId, {
+        cliente = await Cliente.findByPk(datosFactura.clienteId, {
           transaction: transaccion,
         });
         if (!cliente) {
@@ -61,7 +63,10 @@ class ServicioFactura {
         throw new Error("Debe incluir al menos un producto");
       }
 
-      // Validar productos
+      // Validar productos + calcular totales
+      let subtotal = 0;
+      const itemsCalculados = [];
+
       for (const item of datosFactura.items) {
         const producto = await Producto.findByPk(item.productoId, {
           transaction: transaccion,
@@ -69,17 +74,7 @@ class ServicioFactura {
         if (!producto) {
           throw new Error(`Producto con ID ${item.productoId} no encontrado`);
         }
-      }
 
-      // Generar número de factura
-      const numeroFactura = await this.generarNumeroFactura();
-
-      // Calcular totales
-      let subtotal = 0;
-      const itemsCalculados = [];
-
-      for (const item of datosFactura.items) {
-        const producto = await Producto.findByPk(item.productoId);
         const precioUnitario = parseFloat(
           item.precioUnitario || producto.price
         );
@@ -102,20 +97,29 @@ class ServicioFactura {
         });
       }
 
+      // Generar número de factura
+      const numeroFactura = await this.generarNumeroFactura();
+
       // Calcular IVA (13%)
       const montoImpuesto = subtotal * 0.13;
       const montoTotal = subtotal + montoImpuesto;
 
+      const razonSocialFinal =
+        datosFactura.razonSocial ||
+        cliente?.fullName ||
+        cliente?.full_name ||
+        "Cliente Final";
+
       // Crear factura
-      const factura = await Factura.create(
+      factura = await Factura.create(
         {
           numero_factura: numeroFactura,
           fecha_factura: new Date(),
           cliente_id: datosFactura.clienteId || null,
           pedido_id: null,
           //nit: datosFactura.nit || "0",
-          razon_social: datosFactura.razonSocial || "Cliente Final",
-          subtotal: subtotal,
+          razon_social: razonSocialFinal,
+          subtotal,
           monto_impuesto: montoImpuesto,
           monto_descuento: 0,
           monto_total: montoTotal,
@@ -141,16 +145,25 @@ class ServicioFactura {
       }
 
       await transaccion.commit();
-
-      facturaId = factura.id;
     } catch (error) {
-      await transaccion.rollback();
+      if (transaccion && !transaccion.finished) {
+        await transaccion.rollback();
+      }
       throw error;
     }
 
-    return await this.obtenerFacturaPorId(facturaId);
-  }
+    // Generar asiento después del commit
+    try {
+      await this.generarAsientoVenta(factura, idUsuario);
+    } catch (e) {
+      console.warn(
+        "Factura creada pero no se pudo generar asiento:",
+        e.message
+      );
+    }
 
+    return factura;
+  }
   /**
    * Crear factura desde un pedido
    */
@@ -239,74 +252,68 @@ class ServicioFactura {
 
     return await this.obtenerFacturaPorId(facturaId);
   }
-
   /**
    * Generar asiento contable de venta
    */
-  async generarAsientoVenta(factura, idUsuario, transaccion) {
-    // TODO: Aquí deberías configurar las cuentas contables según tu plan de cuentas
-    // Este es un ejemplo básico. Ajusta según tus cuentas reales.
-
+  async generarAsientoVenta(factura, idUsuario) {
     const datosAsiento = {
-      fecha_asiento: factura.fecha_factura,
-      glosa: `Venta según factura ${factura.numero_factura} - Cliente: ${factura.razon_social}`,
+      fecha: factura.fecha_factura,
+      descripcion: `Venta según factura ${factura.numero_factura} - Cliente: ${factura.razon_social}`,
       tipo: "VENTA",
-      tipo_referencia: "Factura",
-      id_referencia: factura.id,
+
+      tipoReferencia: "Factura",
+      idReferencia: factura.id,
+
       detalles: [],
     };
 
-    // Debe: Caja/Banco (dependiendo del método de pago)
-    // Esto es un ejemplo, debes usar el ID real de tu cuenta contable
     const mapeoMetodoPago = {
-      EFECTIVO: 1, // ID de cuenta Caja
-      TRANSFERENCIA: 2, // ID de cuenta Banco
-      TARJETA: 3, // ID de cuenta Banco
-      CREDITO: 4, // ID de Cuentas por Cobrar
+      EFECTIVO: 1,
+      TRANSFERENCIA: 2,
+      TARJETA: 3,
+      CREDITO: 4,
     };
 
     datosAsiento.detalles.push({
-      cuenta_id: mapeoMetodoPago[factura.metodo_pago] || 1,
-      debe: parseFloat(factura.monto_total),
+      cuentaId: mapeoMetodoPago[factura.metodo_pago] || 1,
+      debe: Number(factura.monto_total),
       haber: 0,
       descripcion: `Cobro ${factura.metodo_pago.toLowerCase()}`,
     });
 
-    // Haber: Ingreso por Ventas
-    // Usar ID real de tu cuenta de ingresos
     datosAsiento.detalles.push({
-      cuenta_id: 10, // ID de cuenta "Ingresos por Ventas"
+      cuentaId: 10,
       debe: 0,
-      haber: parseFloat(factura.subtotal),
+      haber: Number(factura.subtotal),
       descripcion: "Ingreso por venta de productos",
     });
 
-    // Si hay impuestos
     if (factura.monto_impuesto > 0) {
       datosAsiento.detalles.push({
-        cuenta_id: 11, // ID de cuenta "IVA Débito Fiscal"
+        cuentaId: 11,
         debe: 0,
-        haber: parseFloat(factura.monto_impuesto),
+        haber: Number(factura.monto_impuesto),
         descripcion: "IVA sobre ventas",
       });
     }
 
-    // Si hay descuentos
     if (factura.monto_descuento > 0) {
       datosAsiento.detalles.push({
-        cuenta_id: 12, // ID de cuenta "Descuentos Concedidos"
-        debe: parseFloat(factura.monto_descuento),
+        cuentaId: 12,
+        debe: Number(factura.monto_descuento),
         haber: 0,
         descripcion: "Descuento aplicado",
       });
     }
 
-    // Nota: Este asiento se crearía pero necesitas tener las cuentas configuradas
-    // Por ahora solo lo documentamos
-    console.log("Asiento contable de venta generado:", datosAsiento);
+    const asiento = await servicioContabilidad.crearAsientoContable(
+      datosAsiento,
+      idUsuario
+    );
 
-    // Descomentar cuando tengas las cuentas creadas:
-    // return await servicioContabilidad.crearAsientoContable(datosAsiento, idUsuario);
+    await servicioContabilidad.aprobarAsiento(asiento.id, idUsuario);
+
+    return asiento;
   }
 
   /**

@@ -124,16 +124,15 @@ class ServicioContabilidad {
    */
   async crearAsientoContable(datosAsiento, idUsuario) {
     const transaccion = await sequelize.transaction();
+    let asientoContable;
 
     try {
       const { detalles, ...datosCabecera } = datosAsiento;
 
-      // Validar que existan detalles
       if (!detalles || detalles.length < 2) {
         throw new Error("Un asiento debe tener al menos 2 líneas");
       }
 
-      // Calcular totales
       let totalDebe = 0;
       let totalHaber = 0;
 
@@ -142,43 +141,35 @@ class ServicioContabilidad {
         totalHaber += parseFloat(detalle.haber || 0);
       }
 
-      // Validar partida doble (debe = haber)
       if (Math.abs(totalDebe - totalHaber) > 0.01) {
         throw new Error(
           `El asiento no está balanceado. Debe: ${totalDebe}, Haber: ${totalHaber}`
         );
       }
 
-      // Generar número de asiento
       const numeroAsiento = await this.generarNumeroAsiento();
 
-      // Crear cabecera
-      const asientoContable = await AsientoContable.create(
+      asientoContable = await AsientoContable.create(
         {
           ...datosCabecera,
-          numeroAsiento: numeroAsiento,
-          totalDebe: totalDebe,
-          totalHaber: totalHaber,
+          numeroAsiento,
+          totalDebe,
+          totalHaber,
           creadoPor: idUsuario,
           estado: "BORRADOR",
         },
         { transaction: transaccion }
       );
 
-      // Crear detalles
       for (let i = 0; i < detalles.length; i++) {
         const detalle = detalles[i];
 
-        // Validar que la cuenta existe y permite movimientos
-        const cuenta = await Cuenta.findByPk(detalle.cuentaId);
-        if (!cuenta) {
-          throw new Error(`La cuenta ${detalle.cuentaId} no existe`);
-        }
-
+        const cuenta = await Cuenta.findByPk(detalle.cuentaId, {
+          transaction: transaccion,
+        });
+        if (!cuenta) throw new Error(`La cuenta ${detalle.cuentaId} no existe`);
         if (!cuenta.permiteMovimiento) {
-          throw new Error(
-            `La cuenta ${cuenta.nombre} no permite movimientos directos`
-          );
+          throw new Error(`La cuenta ${cuenta.nombre} no permite movimientos directos`);
         }
 
         await DetalleAsientoContable.create(
@@ -195,14 +186,16 @@ class ServicioContabilidad {
       }
 
       await transaccion.commit();
-
-      // Retornar con detalles
-      return await this.obtenerAsientoPorId(asientoContable.id);
     } catch (error) {
-      await transaccion.rollback();
+      if (transaccion && !transaccion.finished) {
+        await transaccion.rollback();
+      }
       throw error;
     }
+
+    return await this.obtenerAsientoPorId(asientoContable.id);
   }
+
 
   /**
    * Obtener asiento contable por ID
@@ -217,7 +210,7 @@ class ServicioContabilidad {
             {
               model: Cuenta,
               as: "cuenta",
-              attributes: ["idCuenta", "codigo", "nombre", "tipo"],
+              attributes: ["id", "codigo", "nombre", "tipo"],
             },
           ],
           order: [["numeroLinea", "ASC"]],

@@ -193,21 +193,22 @@ const Contabilidad = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {asiento.detalles?.map((detalle, idx) => (
-                      <tr key={idx}>
-                        <td>{detalle.cuenta?.nombre}</td>
-                        <td className="text-right">
-                          {detalle.debe > 0
-                            ? `$${detalle.debe.toFixed(2)}`
-                            : "-"}
-                        </td>
-                        <td className="text-right">
-                          {detalle.haber > 0
-                            ? `$${detalle.haber.toFixed(2)}`
-                            : "-"}
-                        </td>
-                      </tr>
-                    ))}
+                    {asiento.detalles?.map((detalle, idx) => {
+                      const debeNum = Number(detalle.debe || 0);
+                      const haberNum = Number(detalle.haber || 0);
+
+                      return (
+                        <tr key={idx}>
+                          <td>{detalle.cuenta?.nombre}</td>
+                          <td className="text-right">
+                            {debeNum > 0 ? `$${debeNum.toFixed(2)}` : "-"}
+                          </td>
+                          <td className="text-right">
+                            {haberNum > 0 ? `$${haberNum.toFixed(2)}` : "-"}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
