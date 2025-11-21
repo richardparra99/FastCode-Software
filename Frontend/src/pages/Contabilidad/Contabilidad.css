@@ -1,0 +1,216 @@
+.contabilidad-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.contabilidad-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.tab-btn:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.filtros-fecha {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-end;
+}
+
+.filtros-fecha .form-group {
+  flex: 1;
+  max-width: 200px;
+  margin-bottom: 0;
+}
+
+.nivel-1 {
+  font-weight: 700;
+  background-color: rgba(217, 119, 6, 0.05);
+}
+
+.nivel-2 {
+  font-weight: 600;
+}
+
+.nivel-3 {
+  font-weight: 500;
+}
+
+.nivel-4 {
+  font-weight: 400;
+}
+
+.asientos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.asiento-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+}
+
+.asiento-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.asiento-fecha {
+  margin-left: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.asiento-descripcion {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.detalles-table {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.detalles-table .table {
+  margin: 0;
+}
+
+.balance-content,
+.estado-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.balance-section,
+.estado-section {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  background-color: var(--bg-secondary);
+}
+
+.balance-section h4,
+.estado-section h4 {
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.cuentas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.cuenta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-sm);
+}
+
+.monto {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.monto.positivo {
+  color: var(--success-color);
+}
+
+.monto.negativo {
+  color: var(--danger-color);
+}
+
+.total-section,
+.subtotal-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: 1.125rem;
+}
+
+.resultado-final {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border-color);
+}
+
+.resultado-final h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.resultado-final h2 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .contabilidad-tabs {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    width: 100%;
+  }
+
+  .filtros-fecha {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtros-fecha .form-group {
+    max-width: 100%;
+  }
+
+  .balance-content {
+    gap: 1rem;
+  }
+
+  .resultado-final h2 {
+    font-size: 2rem;
+  }
+}

@@ -1,25 +1,31 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = function (sequelize) {
-  
-  const Cliente = sequelize.define("Cliente", {
-    full_name: {
+  const Cliente = sequelize.define(
+    "Cliente",
+    {
+      fullName: {
         type: DataTypes.STRING,
-        allowNull: false
-    },
-    phone: {
+        allowNull: false,
+      },
+      phone: {
         type: DataTypes.STRING,
-        allowNull: true 
-    },
-    address: {
+        allowNull: true,
+      },
+      address: {
         type: DataTypes.TEXT,
-        allowNull: true
-    },
-    is_whatsapp: {
+        allowNull: true,
+      },
+      isWhatsapp: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
+      },
+    },
+    {
+      tableName: "Clientes",
+      timestamps: true,
     }
-  });
+  );
   return Cliente;
 };
-    ``
+``;

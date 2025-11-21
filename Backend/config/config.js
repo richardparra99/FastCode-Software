@@ -1,22 +1,25 @@
-// config/database.js
-const { Sequelize } = require('sequelize');
+const { Sequelize } = require("sequelize");
 
-
-const sequelize = new Sequelize('software', 'postgres', 'postgres', {
-  host: 'localhost',
-  dialect: 'postgres', 
-  port: 5501, 
-
+const sequelize = new Sequelize({
+  dialect: "postgres",
+  database: "software",
+  username: "postgres",
+  password: "postgres",
+  host: "localhost",
+  port: 5501,
+  define: {
+    underscored: true, // Convierte automáticamente entre camelCase y snake_case
+    freezeTableName: true,
+  },
+  logging: false, // Desactiva logs SQL en consola
 });
-
 
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log('Conexión a la base de datos establecida exitosamente.');
+    console.log("Conexión a la base de datos establecida exitosamente.");
   } catch (error) {
-    console.error('No se pudo conectar a la base de datos:', error);
-    
+    console.error("No se pudo conectar a la base de datos:", error);
   }
 };
 

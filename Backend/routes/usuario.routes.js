@@ -1,22 +1,60 @@
-// const getObjectOr404 = require('../middlewares/getObjectOr404.middleware');
-// const isJsonRequestValid = require('../middlewares/isJsonRequestValid.middleware');
-// const validationJson = require('../middlewares/validation.middleware');
-// const checkDuplicate = require('../middlewares/checkDuplicate.middleware');
-// const {validateUser} = require('../middlewares/validateUser.middleware');
-// const { usuarioSchema } = require('../validators/usuarioSchema');
+const express = require("express");
+const router = express.Router();
+const controladorUsuario = require("../controllers/usuario.controller");
+const {
+  autenticar,
+  autorizarRoles,
+} = require("../middlewares/auth.middleware");
 
-const db = require('../models');
+/**
+ * GET /api/usuarios
+ * Listar todos los usuarios (requiere autenticación)
+ */
+router.get("/", autenticar, controladorUsuario.obtenerTodos);
 
-module.exports = app => {
-	const router = require('express').Router();
-	// const usuarioController = require('../controllers/usuario.controller');
+/**
+ * GET /api/usuarios/:id
+ * Obtener usuario por ID (requiere autenticación)
+ */
+router.get("/:id", autenticar, controladorUsuario.obtenerPorId);
 
-	// router.post('/login', usuarioController.login);
-	// router.post('/register', isJsonRequestValid, validationJson(usuarioSchema), checkDuplicate(db.UsuarioModel, 'username'), usuarioController.register);
-	// router.get('/sorteo',validateUser, usuarioController.getSorteoByUsuarioId);
-	// router.get('/:id', getObjectOr404(db.UsuarioModel), usuarioController.getUsuarioById);
-	// // router.put('/:id/update', isJsonRequestValid, validationJson(usuarioSchema), getObjectOr404(db.UsuarioModel), usuarioController.updateUsuario);
-	// // router.delete('/:id', getObjectOr404(db.UsuarioModel), usuarioController.deleteUsuario);
+/**
+ * POST /api/usuarios
+ * Crear nuevo usuario (solo ADMIN)
+ */
+router.post("/", autenticar, autorizarRoles("ADMIN"), controladorUsuario.crear);
 
-	app.use('/usuarios', router);
-};
+/**
+ * PATCH /api/usuarios/:id
+ * Actualizar usuario (solo ADMIN)
+ */
+router.patch(
+  "/:id",
+  autenticar,
+  autorizarRoles("ADMIN"),
+  controladorUsuario.actualizar
+);
+
+/**
+ * DELETE /api/usuarios/:id
+ * Eliminar (desactivar) usuario (solo ADMIN)
+ */
+router.delete(
+  "/:id",
+  autenticar,
+  autorizarRoles("ADMIN"),
+  controladorUsuario.eliminar
+);
+
+/**
+ * POST /api/usuarios/:id/activar
+ * Activar usuario (solo ADMIN)
+ */
+router.post(
+  "/:id/activar",
+  autenticar,
+  autorizarRoles("ADMIN"),
+  controladorUsuario.activar
+);
+
+module.exports = router;

@@ -1,15 +1,15 @@
-require('dotenv').config()
-const express = require('express')
+require("dotenv").config();
+const express = require("express");
 const bodyParser = require("body-parser");
-const fileUpload = require('express-fileupload');
+const fileUpload = require("express-fileupload");
 
 const db = require("./models");
 
-const app = express()
-const port = 3000
+const app = express();
+const port = 3000;
 
 //Para habilitar las carpetas públicas
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -17,28 +17,32 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Configuración de carga de archivos
-app.use(fileUpload({
+app.use(
+  fileUpload({
     limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-}));
+  })
+);
 // Para habilitar la BD
-db.sequelize.sync({
-    // force: true // drop tables and recreate
-}).then(() => {
+db.sequelize
+  .sync({
+    // force: true, // drop tables and recreate
+  })
+  .then(() => {
     console.log("db resync");
-});
+  });
 
-
-const cors = require('cors');
+const cors = require("cors");
 
 // Permitir solicitudes desde el frontend
-app.use(cors({
-    origin: 'http://localhost:5173', //puerto del frontend
-    credentials: true
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173", //puerto del frontend
+    credentials: true,
+  })
+);
 
 require("./routes")(app);
 
-
 app.listen(port, () => {
-    console.log(`App listening on port ${port}`)
-})
+  console.log(`App listening on port ${port}`);
+});
