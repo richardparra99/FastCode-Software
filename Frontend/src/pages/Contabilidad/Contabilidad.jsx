@@ -21,6 +21,7 @@ const Contabilidad = () => {
     setFechaFin(hoy.toISOString().split("T")[0]);
 
     cargarDatos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vistaActual]);
 
   const cargarDatos = async () => {
@@ -40,7 +41,7 @@ const Contabilidad = () => {
             fechaFin
           );
           if (response.exito) {
-            setLibroDiario(response.datos);
+            setLibroDiario(response.datos?.asientos || []);
           }
         }
       } else if (vistaActual === "balance-general") {
@@ -387,9 +388,8 @@ const Contabilidad = () => {
                 : "Pérdida del Período"}
             </h4>
             <h2
-              className={`monto ${
-                estadoResultados.utilidad >= 0 ? "positivo" : "negativo"
-              }`}
+              className={`monto ${estadoResultados.utilidad >= 0 ? "positivo" : "negativo"
+                }`}
             >
               ${Math.abs(estadoResultados.utilidad).toFixed(2)}
             </h2>
@@ -444,33 +444,29 @@ const Contabilidad = () => {
 
       <div className="contabilidad-tabs">
         <button
-          className={`tab-btn ${
-            vistaActual === "plan-cuentas" ? "active" : ""
-          }`}
+          className={`tab-btn ${vistaActual === "plan-cuentas" ? "active" : ""
+            }`}
           onClick={() => setVistaActual("plan-cuentas")}
         >
           📋 Plan de Cuentas
         </button>
         <button
-          className={`tab-btn ${
-            vistaActual === "libro-diario" ? "active" : ""
-          }`}
+          className={`tab-btn ${vistaActual === "libro-diario" ? "active" : ""
+            }`}
           onClick={() => setVistaActual("libro-diario")}
         >
           📖 Libro Diario
         </button>
         <button
-          className={`tab-btn ${
-            vistaActual === "balance-general" ? "active" : ""
-          }`}
+          className={`tab-btn ${vistaActual === "balance-general" ? "active" : ""
+            }`}
           onClick={() => setVistaActual("balance-general")}
         >
           ⚖️ Balance General
         </button>
         <button
-          className={`tab-btn ${
-            vistaActual === "estado-resultados" ? "active" : ""
-          }`}
+          className={`tab-btn ${vistaActual === "estado-resultados" ? "active" : ""
+            }`}
           onClick={() => setVistaActual("estado-resultados")}
         >
           📊 Estado de Resultados
