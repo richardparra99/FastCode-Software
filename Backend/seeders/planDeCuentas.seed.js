@@ -636,6 +636,8 @@ if (require.main === module) {
 
       // Sincronizar todos los modelos (crear tablas si no existen)
       await sequelize.sync({ alter: true });
+      //await sequelize.sync({ force: true });
+
 
       console.log("✅ Modelos sincronizados correctamente\n");
 

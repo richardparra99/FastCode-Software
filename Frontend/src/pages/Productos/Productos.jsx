@@ -118,33 +118,24 @@ const Productos = () => {
     }
   };
 
+  // ✅ ÚNICO BOTÓN DE ESTADO (activar / desactivar soft)
   const handleToggleActive = async (producto) => {
     try {
-      const response = await ProductoService.activar(producto.id);
-      if (response.exito) {
-        cargarProductos();
-      } else {
-        setError(response.mensaje);
+      // Si está activo → desactivar (soft delete)
+      if (producto.isActive) {
+        if (!window.confirm("¿Desactivar este producto?")) return;
+        const response = await ProductoService.eliminar(producto.id);
+        if (!response.exito) setError(response.mensaje);
       }
+      // Si está inactivo → activar
+      else {
+        const response = await ProductoService.activar(producto.id);
+        if (!response.exito) setError(response.mensaje);
+      }
+
+      await cargarProductos();
     } catch (err) {
       setError("Error al cambiar estado del producto");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Está seguro de eliminar este producto?")) {
-      return;
-    }
-
-    try {
-      const response = await ProductoService.eliminar(id);
-      if (response.exito) {
-        cargarProductos();
-      } else {
-        setError(response.mensaje);
-      }
-    } catch (err) {
-      setError("Error al eliminar producto");
     }
   };
 
@@ -197,9 +188,8 @@ const Productos = () => {
                 <div className="producto-header">
                   <h3 className="producto-nombre">{producto.name}</h3>
                   <span
-                    className={`badge ${
-                      producto.isActive ? "badge-success" : "badge-danger"
-                    }`}
+                    className={`badge ${producto.isActive ? "badge-success" : "badge-danger"
+                      }`}
                   >
                     {producto.isActive ? "Activo" : "Inactivo"}
                   </span>
@@ -226,21 +216,15 @@ const Productos = () => {
                   >
                     ✏️ Editar
                   </button>
+
+                  {/* ✅ Solo un botón para activar/desactivar */}
                   <button
                     onClick={() => handleToggleActive(producto)}
-                    className={`btn btn-sm ${
-                      producto.isActive ? "btn-warning" : "btn-success"
-                    }`}
+                    className={`btn btn-sm ${producto.isActive ? "btn-warning" : "btn-success"
+                      }`}
                     title={producto.isActive ? "Desactivar" : "Activar"}
                   >
                     {producto.isActive ? "🔒 Desactivar" : "✓ Activar"}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(producto.id)}
-                    className="btn btn-sm btn-danger"
-                    title="Eliminar"
-                  >
-                    🗑️
                   </button>
                 </div>
               </div>

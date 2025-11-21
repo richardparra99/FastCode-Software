@@ -2,6 +2,29 @@ const express = require("express");
 const router = express.Router();
 const controladorFactura = require("../controllers/factura.controller");
 const { autenticar } = require("../middlewares/auth.middleware");
+// ============================================
+// RUTAS PARA REPORTES DE FACTURACIÓN
+// ============================================
+
+/**
+ * GET /api/facturas/reportes/ventas
+ * Reporte de ventas por periodo
+ * Query params:
+ *   - fecha_inicio: "2025-01-01" (requerido)
+ *   - fecha_fin: "2025-01-31" (requerido)
+ *   - agrupar_por: "dia|mes|metodo_pago" (opcional)
+ */
+router.get("/reportes/ventas", autenticar, controladorFactura.obtenerReporteVentas);
+
+/**
+ * GET /api/facturas/reportes/por-cliente
+ * Reporte de ventas por cliente
+ * Query params:
+ *   - fecha_inicio: "2025-01-01" (requerido)
+ *   - fecha_fin: "2025-01-31" (requerido)
+ */
+router.get("/reportes/por-cliente", autenticar, controladorFactura.obtenerVentasPorCliente);
+
 
 // ============================================
 // RUTAS PARA GESTIÓN DE FACTURAS
@@ -63,27 +86,5 @@ router.patch("/:id/estado", autenticar, controladorFactura.actualizarEstado);
  */
 router.post("/:id/anular", autenticar, controladorFactura.anularFactura);
 
-// ============================================
-// RUTAS PARA REPORTES DE FACTURACIÓN
-// ============================================
-
-/**
- * GET /api/facturas/reportes/ventas
- * Reporte de ventas por periodo
- * Query params:
- *   - fecha_inicio: "2025-01-01" (requerido)
- *   - fecha_fin: "2025-01-31" (requerido)
- *   - agrupar_por: "dia|mes|metodo_pago" (opcional)
- */
-router.get("/reportes/ventas", controladorFactura.obtenerReporteVentas);
-
-/**
- * GET /api/facturas/reportes/por-cliente
- * Reporte de ventas por cliente
- * Query params:
- *   - fecha_inicio: "2025-01-01" (requerido)
- *   - fecha_fin: "2025-01-31" (requerido)
- */
-router.get("/reportes/por-cliente", controladorFactura.obtenerVentasPorCliente);
 
 module.exports = router;

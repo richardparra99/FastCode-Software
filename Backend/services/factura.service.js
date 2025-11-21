@@ -43,6 +43,8 @@ class ServicioFactura {
   async crearFacturaDirecta(datosFactura, idUsuario) {
     const transaccion = await sequelize.transaction();
 
+    let facturaId;
+
     try {
       // Validar cliente
       if (datosFactura.clienteId) {
@@ -111,7 +113,7 @@ class ServicioFactura {
           fecha_factura: new Date(),
           cliente_id: datosFactura.clienteId || null,
           pedido_id: null,
-          nit: datosFactura.nit || "0",
+          //nit: datosFactura.nit || "0",
           razon_social: datosFactura.razonSocial || "Cliente Final",
           subtotal: subtotal,
           monto_impuesto: montoImpuesto,
@@ -140,11 +142,13 @@ class ServicioFactura {
 
       await transaccion.commit();
 
-      return await this.obtenerFacturaPorId(factura.id);
+      facturaId = factura.id;
     } catch (error) {
       await transaccion.rollback();
       throw error;
     }
+
+    return await this.obtenerFacturaPorId(facturaId);
   }
 
   /**
@@ -152,6 +156,8 @@ class ServicioFactura {
    */
   async crearFacturaDesdePedido(idPedido, datosFactura, idUsuario) {
     const transaccion = await sequelize.transaction();
+
+    let facturaId;
 
     try {
       // Validar que el pedido existe y está en estado ENTREGADO
@@ -203,9 +209,9 @@ class ServicioFactura {
           fecha_factura: new Date(),
           pedido_id: idPedido,
           cliente_id: pedido.client_id,
-          nit: datosFactura.nit || pedido.client?.nit || "0",
+          //nit: datosFactura.nit || pedido.client?.nit || "0",
           razon_social:
-            datosFactura.razon_social || pedido.client?.name || "Sin Nombre",
+            datosFactura.razon_social || pedido.client?.fullName || "Sin Nombre",
           subtotal: subtotal,
           monto_impuesto: montoImpuesto,
           monto_descuento: montoDescuento,
@@ -225,11 +231,13 @@ class ServicioFactura {
 
       await transaccion.commit();
 
-      return await this.obtenerFacturaPorId(factura.id);
+      facturaId = factura.id;
     } catch (error) {
       await transaccion.rollback();
       throw error;
     }
+
+    return await this.obtenerFacturaPorId(facturaId);
   }
 
   /**
@@ -314,7 +322,7 @@ class ServicioFactura {
             {
               model: Producto,
               as: "producto",
-              attributes: ["id", "name", "price", "unit"],
+              attributes: ["id", "name", "price"],
             },
           ],
         },
@@ -333,7 +341,7 @@ class ServicioFactura {
           model: Cliente,
           as: "cliente",
           required: false,
-          attributes: ["id", "name", "nit", "phone", "address"],
+          attributes: ["id", "fullName", "phone", "address"],
         },
         {
           model: Usuario,
@@ -392,7 +400,7 @@ class ServicioFactura {
           model: Cliente,
           as: "cliente",
           required: false,
-          attributes: ["id", "name", "nit"],
+          attributes: ["id", "fullName"],
         },
         {
           model: Usuario,
@@ -506,7 +514,7 @@ class ServicioFactura {
         {
           model: Cliente,
           as: "cliente",
-          attributes: ["id", "name", "nit", "phone"],
+          attributes: ["id", "fullName", "phone"],
         },
       ],
       group: ["cliente_id", "cliente.id"],

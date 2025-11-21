@@ -26,19 +26,18 @@ const Facturacion = () => {
       // Cargar facturas, clientes y productos
       const [facturasRes, clientesRes, productosRes] = await Promise.all([
         FacturacionService.obtenerFacturas(),
-        ClienteService.obtenerClientes(),
-        ProductoService.obtenerProductos(),
+        ClienteService.obtenerTodos(),
+        ProductoService.obtenerTodos({ isActive: true }),
       ]);
 
-      if (facturasRes.exito) {
-        setFacturas(facturasRes.datos || []);
-      }
-      if (clientesRes.exito) {
-        setClientes(clientesRes.datos || []);
-      }
-      if (productosRes.exito) {
-        setProductos(productosRes.datos || []);
-      }
+      if (facturasRes?.exito) setFacturas(facturasRes.datos || []);
+      else setFacturas(facturasRes?.datos || facturasRes || []);
+
+      if (clientesRes?.exito) setClientes(clientesRes.datos || []);
+      else setClientes(clientesRes?.datos || clientesRes || []);
+
+      if (productosRes?.exito) setProductos(productosRes.datos || []);
+      else setProductos(productosRes?.datos || productosRes || []);
 
       setError("");
     } catch (err) {
@@ -70,13 +69,12 @@ const Facturacion = () => {
     setItems(
       items.map((item) => {
         if (item.id === id) {
-          // Si se actualiza el productoId, también actualizar el precio
           if (campo === "productoId") {
-            const producto = productos.find((p) => p.id === parseInt(valor));
+            const producto = productos.find((p) => p.id === Number(valor));
             return {
               ...item,
               productoId: valor,
-              precioUnitario: producto ? parseFloat(producto.price) : 0,
+              precioUnitario: producto ? Number(producto.price ?? producto.precio ?? 0) : 0,
             };
           }
           return { ...item, [campo]: valor };
@@ -88,19 +86,14 @@ const Facturacion = () => {
 
   const calcularSubtotal = () => {
     return items.reduce((total, item) => {
-      const subtotal = item.cantidad * item.precioUnitario;
-      const descuento = (subtotal * item.descuento) / 100;
+      const subtotal = Number(item.cantidad) * Number(item.precioUnitario);
+      const descuento = (subtotal * Number(item.descuento || 0)) / 100;
       return total + (subtotal - descuento);
     }, 0);
   };
 
-  const calcularIVA = () => {
-    return calcularSubtotal() * 0.13;
-  };
-
-  const calcularTotal = () => {
-    return calcularSubtotal() + calcularIVA();
-  };
+  const calcularIVA = () => calcularSubtotal() * 0.13;
+  const calcularTotal = () => calcularSubtotal() + calcularIVA();
 
   const handleCrearFactura = async (e) => {
     e.preventDefault();
@@ -110,7 +103,6 @@ const Facturacion = () => {
       return;
     }
 
-    // Validar que todos los items tengan producto seleccionado
     const itemsSinProducto = items.filter((item) => !item.productoId);
     if (itemsSinProducto.length > 0) {
       setError("Todos los items deben tener un producto seleccionado");
@@ -120,35 +112,38 @@ const Facturacion = () => {
     setLoading(true);
     try {
       const cliente = clienteSeleccionado
-        ? clientes.find((c) => c.id === parseInt(clienteSeleccionado))
+        ? clientes.find((c) => c.id === Number(clienteSeleccionado))
         : null;
 
       const datosFactura = {
         clienteId: clienteSeleccionado || null,
-        razonSocial: cliente?.name || "Cliente Final",
-        nit: cliente?.nit || "0",
+        razonSocial:
+          cliente?.full_name ??
+          cliente?.name ??
+          cliente?.nombre ??
+          "Cliente Final",
         metodoPago: "EFECTIVO",
         items: items.map((item) => ({
-          productoId: item.productoId,
-          cantidad: item.cantidad,
-          precioUnitario: item.precioUnitario,
-          descuento: item.descuento,
+          productoId: Number(item.productoId),
+          cantidad: Number(item.cantidad),
+          precioUnitario: Number(item.precioUnitario),
+          descuento: Number(item.descuento || 0),
         })),
       };
 
       const response = await FacturacionService.crearFactura(datosFactura);
 
-      if (response.exito) {
+      if (response?.exito) {
         setVistaActual("lista");
         setClienteSeleccionado("");
         setItems([]);
         setError("");
         await cargarDatos();
       } else {
-        setError(response.mensaje || "Error al crear factura");
+        setError(response?.mensaje || "Error al crear factura");
       }
     } catch (err) {
-      setError(err.mensaje || "Error al crear factura");
+      setError(err?.mensaje || "Error al crear factura");
       console.error(err);
     } finally {
       setLoading(false);
@@ -159,10 +154,7 @@ const Facturacion = () => {
     <div className="facturas-lista">
       <div className="page-header">
         <h2>Facturas</h2>
-        <button
-          className="btn btn-primary"
-          onClick={() => setVistaActual("nueva")}
-        >
+        <button className="btn btn-primary" onClick={() => setVistaActual("nueva")}>
           + Nueva Factura
         </button>
       </div>
@@ -174,10 +166,7 @@ const Facturacion = () => {
       ) : facturas.length === 0 ? (
         <div className="empty-state">
           <p>No hay facturas registradas</p>
-          <button
-            className="btn btn-primary"
-            onClick={() => setVistaActual("nueva")}
-          >
+          <button className="btn btn-primary" onClick={() => setVistaActual("nueva")}>
             Crear primera factura
           </button>
         </div>
@@ -199,29 +188,25 @@ const Facturacion = () => {
             <tbody>
               {facturas.map((factura) => (
                 <tr key={factura.id}>
+                  <td><strong>#{factura.numero_factura}</strong></td>
+                  <td>{new Date(factura.fecha_factura).toLocaleDateString()}</td>
                   <td>
-                    <strong>#{factura.numero_factura}</strong>
+                    {factura.cliente?.fullName ??
+                      factura.cliente?.name ??
+                      factura.razon_social ??
+                      "Cliente Final"}
                   </td>
-                  <td>
-                    {new Date(factura.fecha_factura).toLocaleDateString()}
-                  </td>
-                  <td>{factura.cliente?.name || factura.razon_social}</td>
-                  <td>${parseFloat(factura.subtotal || 0).toFixed(2)}</td>
-                  <td>${parseFloat(factura.monto_impuesto || 0).toFixed(2)}</td>
-                  <td>
-                    <strong>
-                      ${parseFloat(factura.monto_total || 0).toFixed(2)}
-                    </strong>
-                  </td>
+                  <td>${Number(factura.subtotal || 0).toFixed(2)}</td>
+                  <td>${Number(factura.monto_impuesto || 0).toFixed(2)}</td>
+                  <td><strong>${Number(factura.monto_total || 0).toFixed(2)}</strong></td>
                   <td>
                     <span
-                      className={`badge badge-${
-                        factura.estado === "PAGADA"
-                          ? "success"
-                          : factura.estado === "EMITIDA"
+                      className={`badge badge-${factura.estado === "PAGADA"
+                        ? "success"
+                        : factura.estado === "EMITIDA"
                           ? "warning"
                           : "danger"
-                      }`}
+                        }`}
                     >
                       {factura.estado}
                     </span>
@@ -243,10 +228,7 @@ const Facturacion = () => {
     <div className="nueva-factura">
       <div className="page-header">
         <h2>Nueva Factura</h2>
-        <button
-          className="btn btn-secondary"
-          onClick={() => setVistaActual("lista")}
-        >
+        <button className="btn btn-secondary" onClick={() => setVistaActual("lista")}>
           ← Volver
         </button>
       </div>
@@ -257,17 +239,16 @@ const Facturacion = () => {
         <div className="form-section">
           <h3>Información del Cliente</h3>
           <div className="form-group">
-            <label>Cliente *</label>
+            <label>Cliente</label>
             <select
               className="form-control"
               value={clienteSeleccionado}
               onChange={(e) => setClienteSeleccionado(e.target.value)}
-              required
             >
-              <option value="">Seleccione un cliente</option>
+              <option value="">Cliente Final (sin registrar)</option>
               {clientes.map((cliente) => (
                 <option key={cliente.id} value={cliente.id}>
-                  {cliente.nombre}
+                  {cliente.fullName ?? cliente.name ?? cliente.nombre}
                 </option>
               ))}
             </select>
@@ -305,8 +286,8 @@ const Facturacion = () => {
                 </thead>
                 <tbody>
                   {items.map((item) => {
-                    const subtotal = item.cantidad * item.precioUnitario;
-                    const descuento = (subtotal * item.descuento) / 100;
+                    const subtotal = Number(item.cantidad) * Number(item.precioUnitario);
+                    const descuento = (subtotal * Number(item.descuento || 0)) / 100;
                     const total = subtotal - descuento;
 
                     return (
@@ -316,22 +297,19 @@ const Facturacion = () => {
                             className="form-control"
                             value={item.productoId}
                             onChange={(e) =>
-                              actualizarItem(
-                                item.id,
-                                "productoId",
-                                e.target.value
-                              )
+                              actualizarItem(item.id, "productoId", e.target.value)
                             }
                             required
                           >
                             <option value="">Seleccione producto</option>
                             {productos.map((producto) => (
                               <option key={producto.id} value={producto.id}>
-                                {producto.nombre}
+                                {producto.name ?? producto.nombre}
                               </option>
                             ))}
                           </select>
                         </td>
+
                         <td>
                           <input
                             type="number"
@@ -339,15 +317,12 @@ const Facturacion = () => {
                             min="1"
                             value={item.cantidad}
                             onChange={(e) =>
-                              actualizarItem(
-                                item.id,
-                                "cantidad",
-                                parseFloat(e.target.value)
-                              )
+                              actualizarItem(item.id, "cantidad", Number(e.target.value))
                             }
                             required
                           />
                         </td>
+
                         <td>
                           <input
                             type="number"
@@ -356,15 +331,12 @@ const Facturacion = () => {
                             step="0.01"
                             value={item.precioUnitario}
                             onChange={(e) =>
-                              actualizarItem(
-                                item.id,
-                                "precioUnitario",
-                                parseFloat(e.target.value)
-                              )
+                              actualizarItem(item.id, "precioUnitario", Number(e.target.value))
                             }
                             required
                           />
                         </td>
+
                         <td>
                           <input
                             type="number"
@@ -373,17 +345,13 @@ const Facturacion = () => {
                             max="100"
                             value={item.descuento}
                             onChange={(e) =>
-                              actualizarItem(
-                                item.id,
-                                "descuento",
-                                parseFloat(e.target.value)
-                              )
+                              actualizarItem(item.id, "descuento", Number(e.target.value))
                             }
                           />
                         </td>
-                        <td>
-                          <strong>${total.toFixed(2)}</strong>
-                        </td>
+
+                        <td><strong>${total.toFixed(2)}</strong></td>
+
                         <td>
                           <button
                             type="button"
