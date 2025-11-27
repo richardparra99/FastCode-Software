@@ -7,13 +7,14 @@ module.exports = function (sequelize) {
       codigo: {
         type: DataTypes.STRING(20),
         allowNull: false,
-        unique: true,
-        comment: "Código contable (ej: 1.1.01.001)",
+        unique: {
+          name: 'unique_codigo',
+          msg: 'El código de cuenta debe ser único'
+        }
       },
       nombre: {
         type: DataTypes.STRING(255),
-        allowNull: false,
-        comment: "Nombre de la cuenta (ej: Caja General)",
+        allowNull: false
       },
       tipo: {
         type: DataTypes.ENUM(
@@ -23,34 +24,28 @@ module.exports = function (sequelize) {
           "INGRESO",
           "GASTO"
         ),
-        allowNull: false,
-        comment: "Tipo de cuenta según naturaleza contable",
+        allowNull: false
       },
       nivel: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 1,
-        comment: "Nivel jerárquico (1=Grupo, 2=Subgrupo, 3=Mayor, 4=Auxiliar)",
+        defaultValue: 1
       },
       padreId: {
         type: DataTypes.INTEGER,
-        allowNull: true,
-        comment: "ID de la cuenta padre para jerarquía",
+        allowNull: true
       },
       estaActiva: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true,
-        comment: "Indica si la cuenta está activa",
+        defaultValue: true
       },
       permiteMovimiento: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true,
-        comment: "Si permite movimientos directos (false para cuentas padre)",
+        defaultValue: true
       },
       descripcion: {
         type: DataTypes.TEXT,
-        allowNull: true,
-        comment: "Descripción adicional de la cuenta",
+        allowNull: true
       },
     },
     {

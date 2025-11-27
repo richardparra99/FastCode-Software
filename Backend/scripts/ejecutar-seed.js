@@ -5,7 +5,7 @@ const path = require("path");
 async function ejecutarSQL() {
   const pool = new Pool({
     host: "localhost",
-    port: 5501,
+    port: 5505,
     database: "software",
     user: "postgres",
     password: "postgres",

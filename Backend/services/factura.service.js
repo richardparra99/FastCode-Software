@@ -110,12 +110,14 @@ class ServicioFactura {
         cliente?.full_name ||
         "Cliente Final";
 
+
       // Crear factura
       factura = await Factura.create(
         {
           numero_factura: numeroFactura,
           fecha_factura: new Date(),
           cliente_id: datosFactura.clienteId || null,
+          cliente_nombre: cliente?.fullName || "Cliente Final 2",
           pedido_id: null,
           //nit: datosFactura.nit || "0",
           razon_social: razonSocialFinal,

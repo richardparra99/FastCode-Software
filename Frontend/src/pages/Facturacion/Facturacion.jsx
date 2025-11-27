@@ -191,10 +191,8 @@ const Facturacion = () => {
                   <td><strong>#{factura.numero_factura}</strong></td>
                   <td>{new Date(factura.fecha_factura).toLocaleDateString()}</td>
                   <td>
-                    {factura.cliente?.fullName ??
-                      factura.cliente?.name ??
-                      factura.razon_social ??
-                      "Cliente Final"}
+                    {factura.cliente_nombre ||
+                      "Cliente Final 3"}
                   </td>
                   <td>${Number(factura.subtotal || 0).toFixed(2)}</td>
                   <td>${Number(factura.monto_impuesto || 0).toFixed(2)}</td>

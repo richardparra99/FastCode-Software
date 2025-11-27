@@ -576,7 +576,7 @@ async function seedPlanDeCuentas() {
         description,
       } = cuenta;
 
-      // Transformar campos de inglés a español
+      // Transformar campos al formato correcto
       const accountData = {
         codigo: code,
         nombre: name,
@@ -586,6 +586,7 @@ async function seedPlanDeCuentas() {
         permite_movimiento:
           allows_movement !== undefined ? allows_movement : false,
         descripcion: description || null,
+        padre_id: null, // Se asignará después si tiene parent_code
       };
 
       // Si tiene código padre, buscar el ID

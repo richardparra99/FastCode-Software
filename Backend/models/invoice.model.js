@@ -21,6 +21,12 @@ module.exports = function (sequelize) {
         allowNull: true,
         comment: "ID del cliente (opcional para ventas rápidas)",
       },
+      cliente_nombre: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: "Nombre del cliente (opcional para ventas rápidas)",
+      },
+
       pedido_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
