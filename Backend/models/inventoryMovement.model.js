@@ -21,6 +21,10 @@ module.exports = function (sequelize) {
     cost_at_moment: DataTypes.DECIMAL,
     reference_id: DataTypes.UUID,
     description: DataTypes.STRING,
+  },
+  {
+    tableName: "InventoryMovements",
+    timestamps: true
   });
   return InventoryMovement;
 };

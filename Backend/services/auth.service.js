@@ -1,8 +1,6 @@
 const bcrypt = require("bcrypt");
 const { Usuario, AuthToken } = require("../models");
 const { generateAuthToken } = require("../utilities/text.utilities");
-const dotenv = require("dotenv");
-dotenv.config();
 
 class ServicioAuth {
   /**

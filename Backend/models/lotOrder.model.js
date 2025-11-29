@@ -5,6 +5,7 @@ module.exports = function (sequelize) {
     "LotOrder",
     {},
     {
+      tableName: "LotOrders",
       timestamps: false,
     }
   );

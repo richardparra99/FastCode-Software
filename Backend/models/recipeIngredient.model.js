@@ -10,6 +10,7 @@ module.exports = function (sequelize) {
       },
     },
     {
+      tableName: "RecipeIngredients",
       timestamps: false,
     }
   );

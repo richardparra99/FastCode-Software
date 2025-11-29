@@ -14,6 +14,7 @@ module.exports = function (sequelize) {
       },
     },
     {
+      tableName: "OrderItems",
       timestamps: false,
     }
   );

@@ -27,6 +27,9 @@ module.exports = function (sequelize) {
       type: DataTypes.DATEONLY,
       defaultValue: DataTypes.NOW,
     },
+  }, {
+    tableName: "ProductionLots",
+    timestamps: true
   });
   return ProductionLot;
 };

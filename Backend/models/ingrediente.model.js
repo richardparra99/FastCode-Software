@@ -23,6 +23,9 @@ module.exports = function (sequelize) {
         type: DataTypes.DECIMAL,
         defaultValue: 0
     }
+  }, {
+    tableName: "Ingredientes",
+    timestamps: true
   });
   return Ingrediente;
 };

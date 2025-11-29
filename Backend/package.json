@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "node scripts/seed-initial-data.js",
+    "setup": "node scripts/seed-initial-data.js"
   },
   "repository": {
     "type": "git",

@@ -2,16 +2,16 @@ const { Sequelize } = require("sequelize");
 
 const sequelize = new Sequelize({
   dialect: "postgres",
-  database: "software-fc-db",
+  database: "software",
   username: "postgres",
   password: "postgres",
   host: "localhost",
-  port: 5432,
+  port: 5505,
   define: {
     underscored: true, // Convierte automáticamente entre camelCase y snake_case
-    freezeTableName: true,
+    freezeTableName: true, // Evita que Sequelize pluralice los nombres de tablas
   },
-  logging: false, // Desactiva logs SQL en consola
+  logging: console.log, // Activa logs SQL en consola
 });
 
 const connectDB = async () => {

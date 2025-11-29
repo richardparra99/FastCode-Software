@@ -237,74 +237,109 @@ const Contabilidad = () => {
         </button>
       </div>
 
-      {balanceGeneral && (
+      {balanceGeneral ? (
         <div className="balance-content">
-          <div className="balance-section">
-            <h4>Activos</h4>
-            <div className="cuentas-list">
-              {balanceGeneral.ACTIVO &&
-                Array.isArray(balanceGeneral.ACTIVO) &&
-                balanceGeneral.ACTIVO.map((cuenta) => (
-                  <div key={cuenta.id || cuenta.codigo} className="cuenta-item">
-                    <span>{cuenta.nombre}</span>
-                    <span className="monto">
-                      ${cuenta.saldo?.toFixed(2) || "0.00"}
-                    </span>
-                  </div>
-                ))}
+          <div className="balance-row">
+            {/* ACTIVOS */}
+            <div className="balance-section">
+              <h4>ACTIVOS</h4>
+              <div className="cuentas-list">
+                {balanceGeneral.activos?.cuentas?.length > 0 ? (
+                  balanceGeneral.activos.cuentas.map((cuenta) => (
+                    <div key={cuenta.codigo} className="cuenta-item">
+                      <span className="cuenta-codigo">{cuenta.codigo}</span>
+                      <span className="cuenta-nombre">{cuenta.nombre}</span>
+                      <span className="monto">
+                        Bs. {cuenta.saldo?.toFixed(2) || "0.00"}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted">No hay activos registrados</p>
+                )}
+              </div>
+              <div className="total-section">
+                <strong>Total Activos:</strong>
+                <strong className="monto">
+                  Bs. {balanceGeneral.activos?.total?.toFixed(2) || "0.00"}
+                </strong>
+              </div>
             </div>
-            <div className="total-section">
-              <strong>Total Activos:</strong>
-              <strong className="monto">
-                ${balanceGeneral.totalActivos?.toFixed(2) || "0.00"}
-              </strong>
+
+            {/* PASIVOS Y PATRIMONIO */}
+            <div className="balance-section">
+              <h4>PASIVOS</h4>
+              <div className="cuentas-list">
+                {balanceGeneral.pasivos?.cuentas?.length > 0 ? (
+                  balanceGeneral.pasivos.cuentas.map((cuenta) => (
+                    <div key={cuenta.codigo} className="cuenta-item">
+                      <span className="cuenta-codigo">{cuenta.codigo}</span>
+                      <span className="cuenta-nombre">{cuenta.nombre}</span>
+                      <span className="monto">
+                        Bs. {cuenta.saldo?.toFixed(2) || "0.00"}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted">No hay pasivos registrados</p>
+                )}
+              </div>
+              <div className="subtotal-section">
+                <strong>Total Pasivos:</strong>
+                <strong className="monto">
+                  Bs. {balanceGeneral.pasivos?.total?.toFixed(2) || "0.00"}
+                </strong>
+              </div>
+
+              <h4 className="mt-3">PATRIMONIO</h4>
+              <div className="cuentas-list">
+                {balanceGeneral.patrimonio?.cuentas?.length > 0 ? (
+                  balanceGeneral.patrimonio.cuentas.map((cuenta) => (
+                    <div key={cuenta.codigo} className="cuenta-item">
+                      <span className="cuenta-codigo">{cuenta.codigo}</span>
+                      <span className="cuenta-nombre">{cuenta.nombre}</span>
+                      <span className="monto">
+                        Bs. {cuenta.saldo?.toFixed(2) || "0.00"}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted">No hay patrimonio registrado</p>
+                )}
+              </div>
+              <div className="subtotal-section">
+                <strong>Total Patrimonio:</strong>
+                <strong className="monto">
+                  Bs. {balanceGeneral.patrimonio?.total?.toFixed(2) || "0.00"}
+                </strong>
+              </div>
+
+              <div className="total-section mt-3">
+                <strong>Total Pasivo + Patrimonio:</strong>
+                <strong className="monto">
+                  Bs. {balanceGeneral.totalPasivoPatrimonio?.toFixed(2) || "0.00"}
+                </strong>
+              </div>
             </div>
           </div>
 
-          <div className="balance-section">
-            <h4>Pasivos</h4>
-            <div className="cuentas-list">
-              {balanceGeneral.PASIVO &&
-                Array.isArray(balanceGeneral.PASIVO) &&
-                balanceGeneral.PASIVO.map((cuenta) => (
-                  <div key={cuenta.id || cuenta.codigo} className="cuenta-item">
-                    <span>{cuenta.nombre}</span>
-                    <span className="monto">
-                      ${cuenta.saldo?.toFixed(2) || "0.00"}
-                    </span>
-                  </div>
-                ))}
-            </div>
-            <div className="total-section">
-              <strong>Total Pasivos:</strong>
-              <strong className="monto">
-                ${balanceGeneral.totalPasivos?.toFixed(2) || "0.00"}
-              </strong>
-            </div>
-          </div>
-
-          <div className="balance-section">
-            <h4>Patrimonio</h4>
-            <div className="cuentas-list">
-              {balanceGeneral.PATRIMONIO &&
-                Array.isArray(balanceGeneral.PATRIMONIO) &&
-                balanceGeneral.PATRIMONIO.map((cuenta) => (
-                  <div key={cuenta.id || cuenta.codigo} className="cuenta-item">
-                    <span>{cuenta.nombre}</span>
-                    <span className="monto">
-                      ${cuenta.saldo?.toFixed(2) || "0.00"}
-                    </span>
-                  </div>
-                ))}
-            </div>
-            <div className="total-section">
-              <strong>Total Patrimonio:</strong>
-              <strong className="monto">
-                ${balanceGeneral.totalPatrimonio?.toFixed(2)}
-              </strong>
-            </div>
+          {/* Verificación de balance */}
+          <div className={`balance-verificacion ${balanceGeneral.estaBalanceado ? 'balanceado' : 'desbalanceado'}`}>
+            {balanceGeneral.estaBalanceado ? (
+              <div className="alert alert-success">
+                ✅ Balance correcto: Activos = Pasivos + Patrimonio
+              </div>
+            ) : (
+              <div className="alert alert-warning">
+                ⚠️ Balance desbalanceado - Verificar registros contables
+              </div>
+            )}
           </div>
         </div>
+      ) : (
+        <p className="text-muted text-center">
+          Selecciona una fecha y presiona Consultar
+        </p>
       )}
     </div>
   );
@@ -336,66 +371,86 @@ const Contabilidad = () => {
         </button>
       </div>
 
-      {estadoResultados && (
+      {estadoResultados ? (
         <div className="estado-content">
+          {/* INGRESOS */}
           <div className="estado-section">
-            <h4>Ingresos</h4>
+            <h4>INGRESOS</h4>
             <div className="cuentas-list">
-              {estadoResultados.INGRESO &&
-                Array.isArray(estadoResultados.INGRESO) &&
-                estadoResultados.INGRESO.map((cuenta) => (
-                  <div key={cuenta.id || cuenta.codigo} className="cuenta-item">
-                    <span>{cuenta.nombre}</span>
+              {estadoResultados.ingresos?.cuentas?.length > 0 ? (
+                estadoResultados.ingresos.cuentas.map((cuenta) => (
+                  <div key={cuenta.codigo} className="cuenta-item">
+                    <span className="cuenta-codigo">{cuenta.codigo}</span>
+                    <span className="cuenta-nombre">{cuenta.nombre}</span>
                     <span className="monto positivo">
-                      ${cuenta.saldo?.toFixed(2) || "0.00"}
+                      Bs. {cuenta.monto?.toFixed(2) || "0.00"}
                     </span>
                   </div>
-                ))}
+                ))
+              ) : (
+                <p className="text-muted">No hay ingresos registrados</p>
+              )}
             </div>
             <div className="subtotal-section">
               <strong>Total Ingresos:</strong>
               <strong className="monto positivo">
-                ${estadoResultados.totalIngresos?.toFixed(2) || "0.00"}
+                Bs. {estadoResultados.ingresos?.total?.toFixed(2) || "0.00"}
               </strong>
             </div>
           </div>
 
+          {/* GASTOS */}
           <div className="estado-section">
-            <h4>Gastos</h4>
+            <h4>GASTOS</h4>
             <div className="cuentas-list">
-              {estadoResultados.GASTO &&
-                Array.isArray(estadoResultados.GASTO) &&
-                estadoResultados.GASTO.map((cuenta) => (
-                  <div key={cuenta.id || cuenta.codigo} className="cuenta-item">
-                    <span>{cuenta.nombre}</span>
+              {estadoResultados.gastos?.cuentas?.length > 0 ? (
+                estadoResultados.gastos.cuentas.map((cuenta) => (
+                  <div key={cuenta.codigo} className="cuenta-item">
+                    <span className="cuenta-codigo">{cuenta.codigo}</span>
+                    <span className="cuenta-nombre">{cuenta.nombre}</span>
                     <span className="monto negativo">
-                      ${cuenta.saldo?.toFixed(2) || "0.00"}
+                      Bs. {cuenta.monto?.toFixed(2) || "0.00"}
                     </span>
                   </div>
-                ))}
+                ))
+              ) : (
+                <p className="text-muted">No hay gastos registrados</p>
+              )}
             </div>
             <div className="subtotal-section">
               <strong>Total Gastos:</strong>
               <strong className="monto negativo">
-                ${estadoResultados.totalGastos?.toFixed(2) || "0.00"}
+                Bs. {estadoResultados.gastos?.total?.toFixed(2) || "0.00"}
               </strong>
             </div>
           </div>
 
+          {/* RESULTADO FINAL */}
           <div className="resultado-final">
             <h4>
-              {estadoResultados.utilidad >= 0
-                ? "Utilidad del Período"
-                : "Pérdida del Período"}
+              {estadoResultados.utilidadNeta >= 0
+                ? "🎉 Utilidad del Período"
+                : "⚠️ Pérdida del Período"}
             </h4>
             <h2
-              className={`monto ${estadoResultados.utilidad >= 0 ? "positivo" : "negativo"
+              className={`monto ${estadoResultados.utilidadNeta >= 0 ? "positivo" : "negativo"
                 }`}
             >
-              ${Math.abs(estadoResultados.utilidad).toFixed(2)}
+              Bs. {estadoResultados.utilidadNeta?.toFixed(2) || "0.00"}
             </h2>
           </div>
+
+          {/* Período */}
+          <div className="periodo-info">
+            <p className="text-muted">
+              Período: {new Date(estadoResultados.periodo?.fechaInicio).toLocaleDateString()} - {new Date(estadoResultados.periodo?.fechaFin).toLocaleDateString()}
+            </p>
+          </div>
         </div>
+      ) : (
+        <p className="text-muted text-center">
+          Selecciona un rango de fechas y presiona Consultar
+        </p>
       )}
     </div>
   );

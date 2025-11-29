@@ -258,64 +258,79 @@ class ServicioFactura {
    * Generar asiento contable de venta
    */
   async generarAsientoVenta(factura, idUsuario) {
-    const datosAsiento = {
-      fecha: factura.fecha_factura,
-      descripcion: `Venta según factura ${factura.numero_factura} - Cliente: ${factura.razon_social}`,
-      tipo: "VENTA",
+    try {
+      // Buscar las cuentas contables por código
+      const { Cuenta } = require("../models");
 
-      tipoReferencia: "Factura",
-      idReferencia: factura.id,
+      // Mapeo de métodos de pago a códigos de cuenta
+      const codigoCuentaPorMetodoPago = {
+        EFECTIVO: "1.1.01.001", // Caja General
+        TRANSFERENCIA: "1.1.01.003", // Banco Nacional - Cuenta Corriente
+        TARJETA: "1.1.01.003", // Banco Nacional - Cuenta Corriente
+        CREDITO: "1.1.02.001", // Clientes (Cuentas por Cobrar)
+      };
 
-      detalles: [],
-    };
+      const codigoCuenta = codigoCuentaPorMetodoPago[factura.metodo_pago] || "1.1.01.001";
 
-    const mapeoMetodoPago = {
-      EFECTIVO: 1,
-      TRANSFERENCIA: 2,
-      TARJETA: 3,
-      CREDITO: 4,
-    };
+      // Buscar las cuentas
+      const cuentaCobro = await Cuenta.findOne({ where: { codigo: codigoCuenta } });
+      const cuentaVentas = await Cuenta.findOne({ where: { codigo: "4.1.01" } }); // Ventas de Productos
+      const cuentaIVA = await Cuenta.findOne({ where: { codigo: "2.1.03.001" } }); // IVA por Pagar
 
-    datosAsiento.detalles.push({
-      cuentaId: mapeoMetodoPago[factura.metodo_pago] || 1,
-      debe: Number(factura.monto_total),
-      haber: 0,
-      descripcion: `Cobro ${factura.metodo_pago.toLowerCase()}`,
-    });
+      if (!cuentaCobro || !cuentaVentas) {
+        console.error("No se encontraron las cuentas contables necesarias");
+        throw new Error("No se encontraron las cuentas contables necesarias para generar el asiento");
+      }
 
-    datosAsiento.detalles.push({
-      cuentaId: 10,
-      debe: 0,
-      haber: Number(factura.subtotal),
-      descripcion: "Ingreso por venta de productos",
-    });
+      const datosAsiento = {
+        fecha: factura.fecha_factura,
+        descripcion: `Venta según factura ${factura.numero_factura} - Cliente: ${factura.razon_social}`,
+        tipo: "VENTA",
+        tipoReferencia: "Factura",
+        idReferencia: factura.id,
+        detalles: [],
+      };
 
-    if (factura.monto_impuesto > 0) {
+      // Registro del cobro (DEBE)
       datosAsiento.detalles.push({
-        cuentaId: 11,
-        debe: 0,
-        haber: Number(factura.monto_impuesto),
-        descripcion: "IVA sobre ventas",
-      });
-    }
-
-    if (factura.monto_descuento > 0) {
-      datosAsiento.detalles.push({
-        cuentaId: 12,
-        debe: Number(factura.monto_descuento),
+        cuentaId: cuentaCobro.id,
+        debe: Number(factura.monto_total),
         haber: 0,
-        descripcion: "Descuento aplicado",
+        descripcion: `Cobro ${factura.metodo_pago.toLowerCase()}`,
       });
+
+      // Registro de la venta (HABER)
+      datosAsiento.detalles.push({
+        cuentaId: cuentaVentas.id,
+        debe: 0,
+        haber: Number(factura.subtotal),
+        descripcion: "Ingreso por venta de productos",
+      });
+
+      // Registro del IVA por pagar (HABER)
+      if (factura.monto_impuesto > 0 && cuentaIVA) {
+        datosAsiento.detalles.push({
+          cuentaId: cuentaIVA.id,
+          debe: 0,
+          haber: Number(factura.monto_impuesto),
+          descripcion: "IVA sobre ventas",
+        });
+      }
+
+      // Crear el asiento contable
+      const asiento = await servicioContabilidad.crearAsientoContable(
+        datosAsiento,
+        idUsuario
+      );
+
+      // Aprobar automáticamente el asiento
+      await servicioContabilidad.aprobarAsiento(asiento.id, idUsuario);
+
+      return asiento;
+    } catch (error) {
+      console.error("Error al generar asiento de venta:", error);
+      throw error;
     }
-
-    const asiento = await servicioContabilidad.crearAsientoContable(
-      datosAsiento,
-      idUsuario
-    );
-
-    await servicioContabilidad.aprobarAsiento(asiento.id, idUsuario);
-
-    return asiento;
   }
 
   /**
