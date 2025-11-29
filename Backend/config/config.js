@@ -2,11 +2,11 @@ const { Sequelize } = require("sequelize");
 
 const sequelize = new Sequelize({
   dialect: "postgres",
-  database: "software",
+  database: "software-fc-db",
   username: "postgres",
   password: "postgres",
   host: "localhost",
-  port: 5505,
+  port: 5432,
   define: {
     underscored: true, // Convierte automáticamente entre camelCase y snake_case
     freezeTableName: true,
