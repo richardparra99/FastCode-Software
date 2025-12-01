@@ -284,7 +284,7 @@ class ServicioFactura {
 
       const datosAsiento = {
         fecha: factura.fecha_factura,
-        descripcion: `Venta según factura ${factura.numero_factura} - Cliente: ${factura.razon_social}`,
+        descripcion: `Venta según factura ${factura.numero_factura} - Cliente: ${factura.cliente_nombre}`,
         tipo: "VENTA",
         tipoReferencia: "Factura",
         idReferencia: factura.id,
