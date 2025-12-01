@@ -273,6 +273,39 @@ class ControladorContabilidad {
   }
 
   /**
+   * GET /api/contabilidad/libro-mayor-general
+   * Libro Mayor de todas las cuentas (formato T)
+   */
+  async obtenerLibroMayorGeneral(req, res) {
+    try {
+      const { fecha_inicio, fecha_fin } = req.query;
+
+      if (!fecha_inicio || !fecha_fin) {
+        return res.status(400).json({
+          exito: false,
+          mensaje: "Se requieren fechas de inicio y fin",
+        });
+      }
+
+      const libroMayorGeneral = await servicioContabilidad.obtenerLibroMayorGeneral(
+        fecha_inicio,
+        fecha_fin
+      );
+
+      res.status(200).json({
+        exito: true,
+        datos: libroMayorGeneral,
+      });
+    } catch (error) {
+      console.error("Error al obtener libro mayor general:", error);
+      res.status(500).json({
+        exito: false,
+        mensaje: error.message,
+      });
+    }
+  }
+
+  /**
    * GET /api/contabilidad/balance-comprobacion
    * Balance de Comprobación
    */
@@ -389,6 +422,8 @@ module.exports = {
     controladorInstance.obtenerLibroDiario.bind(controladorInstance),
   obtenerLibroMayor:
     controladorInstance.obtenerLibroMayor.bind(controladorInstance),
+  obtenerLibroMayorGeneral:
+    controladorInstance.obtenerLibroMayorGeneral.bind(controladorInstance),
   obtenerBalanceComprobacion:
     controladorInstance.obtenerBalanceComprobacion.bind(controladorInstance),
   obtenerBalanceGeneral:

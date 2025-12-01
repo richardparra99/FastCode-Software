@@ -63,6 +63,45 @@ const obtenerEstadoResultados = async (fechaInicio, fechaFin) => {
   }
 };
 
+const obtenerLibroMayor = async (idCuenta, fechaInicio, fechaFin) => {
+  try {
+    const response = await axios.get(`${API_URL}/libro-mayor/${idCuenta}`, {
+      ...getAuthHeaders(),
+      params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener libro mayor:", error);
+    throw error.response?.data || error.message;
+  }
+};
+
+const obtenerLibroMayorGeneral = async (fechaInicio, fechaFin) => {
+  try {
+    const response = await axios.get(`${API_URL}/libro-mayor-general`, {
+      ...getAuthHeaders(),
+      params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener libro mayor general:", error);
+    throw error.response?.data || error.message;
+  }
+};
+
+const obtenerBalanceComprobacion = async (fechaInicio, fechaFin) => {
+  try {
+    const response = await axios.get(`${API_URL}/balance-comprobacion`, {
+      ...getAuthHeaders(),
+      params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener balance de comprobación:", error);
+    throw error.response?.data || error.message;
+  }
+};
+
 const crearAsiento = async (asientoData) => {
   try {
     const response = await axios.post(
@@ -77,18 +116,13 @@ const crearAsiento = async (asientoData) => {
   }
 };
 
-export {
-  obtenerPlanCuentas,
-  obtenerLibroDiario,
-  obtenerBalanceGeneral,
-  obtenerEstadoResultados,
-  crearAsiento,
-};
-
 export default {
   obtenerPlanCuentas,
   obtenerLibroDiario,
   obtenerBalanceGeneral,
   obtenerEstadoResultados,
+  obtenerLibroMayor,
+  obtenerLibroMayorGeneral,
+  obtenerBalanceComprobacion,
   crearAsiento,
 };

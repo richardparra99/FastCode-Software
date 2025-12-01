@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import FacturacionService from "../../services/FacturacionService";
 import ClienteService from "../../services/ClienteService";
 import ProductoService from "../../services/ProductoService";
@@ -94,6 +96,75 @@ const Facturacion = () => {
 
   const calcularIVA = () => calcularSubtotal() * 0.13;
   const calcularTotal = () => calcularSubtotal() + calcularIVA();
+
+  const generarFacturaPDF = async (factura) => {
+    try {
+      // Fetch full invoice details with items
+      const response = await FacturacionService.obtenerFacturaPorId(factura.id);
+      const facturaCompleta = response.datos || response;
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+
+      // Encabezado
+      doc.setFontSize(20);
+      doc.text("PANADERÍA - FACTURA", pageWidth / 2, 20, { align: "center" });
+
+      doc.setFontSize(12);
+      doc.text(`N° Factura: ${facturaCompleta.numero_factura}`, 15, 35);
+      doc.text(`Fecha: ${new Date(facturaCompleta.fecha_factura).toLocaleDateString()}`, pageWidth - 15, 35, { align: "right" });
+
+      doc.text(`Cliente: ${facturaCompleta.cliente?.fullName || facturaCompleta.cliente_nombre || "Cliente Final"}`, 15, 45);
+      doc.text(`NIT/CI: ${facturaCompleta.nit_cliente || "0"}`, 15, 52);
+
+      // Detalles
+      const detalles = facturaCompleta.detalles || [];
+
+      const tableData = detalles.map(item => [
+        item.producto?.name || item.producto_nombre || "Producto",
+        item.cantidad,
+        Number(item.precio_unitario).toFixed(2),
+        Number(item.subtotal).toFixed(2)
+      ]);
+
+      if (tableData.length > 0) {
+        doc.autoTable({
+          startY: 60,
+          head: [['Producto', 'Cant.', 'P. Unit.', 'Subtotal']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: { fillColor: [41, 128, 185] },
+          columnStyles: {
+            1: { halign: 'center' },
+            2: { halign: 'right' },
+            3: { halign: 'right' }
+          }
+        });
+      } else {
+        doc.text("(No hay detalles disponibles)", 15, 70);
+      }
+
+      const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80;
+
+      // Totales
+      doc.setFontSize(11);
+      doc.text(`Subtotal: Bs. ${Number(facturaCompleta.subtotal).toFixed(2)}`, pageWidth - 15, finalY, { align: "right" });
+      doc.text(`IVA (13%): Bs. ${Number(facturaCompleta.monto_impuesto).toFixed(2)}`, pageWidth - 15, finalY + 7, { align: "right" });
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total: Bs. ${Number(facturaCompleta.monto_total).toFixed(2)}`, pageWidth - 15, finalY + 15, { align: "right" });
+
+      // Pie de página
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("Gracias por su preferencia", pageWidth / 2, doc.internal.pageSize.height - 10, { align: "center" });
+
+      window.open(doc.output('bloburl'), '_blank');
+    } catch (error) {
+      console.error("Error al generar PDF:", error);
+      alert("Error al generar el PDF de la factura");
+    }
+  };
 
   const handleCrearFactura = async (e) => {
     e.preventDefault();
@@ -210,8 +281,8 @@ const Facturacion = () => {
                     </span>
                   </td>
                   <td>
-                    <button className="btn btn-sm btn-info">Ver</button>
-                    <button className="btn btn-sm btn-primary">Imprimir</button>
+                    <button className="btn btn-sm btn-info" onClick={() => generarFacturaPDF(factura)}>Ver</button>
+                    <button className="btn btn-sm btn-primary" onClick={() => generarFacturaPDF(factura)}>Imprimir PDF</button>
                   </td>
                 </tr>
               ))}

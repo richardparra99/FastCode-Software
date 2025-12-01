@@ -99,7 +99,6 @@ router.get(
 );
 
 /**
- * GET /api/contabilidad/libro-mayor
  * Libro mayor por cuenta
  * Query params: cuenta_id, fecha_inicio, fecha_fin
  */
@@ -107,6 +106,16 @@ router.get(
   "/libro-mayor",
   autenticar,
   controladorContabilidad.obtenerLibroMayor
+);
+
+/**
+ * GET /api/contabilidad/libro-mayor-general
+ * Libro Mayor de todas las cuentas (formato T)
+ */
+router.get(
+  "/libro-mayor-general",
+  autenticar,
+  controladorContabilidad.obtenerLibroMayorGeneral
 );
 
 /**

@@ -16,6 +16,7 @@ import Clientes from "./pages/Clientes/Clientes";
 import Productos from "./pages/Productos/Productos";
 import Contabilidad from "./pages/Contabilidad/Contabilidad";
 import Facturacion from "./pages/Facturacion/Facturacion";
+import AsientosContables from "./pages/AsientosContables/AsientosContables";
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = AuthService.isAuthenticated();
@@ -82,6 +83,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Facturacion />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/asientos-contables"
+        element={
+          <ProtectedRoute>
+            <AsientosContables />
           </ProtectedRoute>
         }
       />

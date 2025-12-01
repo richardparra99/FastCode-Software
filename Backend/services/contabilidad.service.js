@@ -149,6 +149,9 @@ class ServicioContabilidad {
 
       const numeroAsiento = await this.generarNumeroAsiento();
 
+      // Asientos manuales (OPERACION) se contabilizan automáticamente
+      const estadoInicial = datosAsiento.tipo === 'OPERACION' ? 'CONTABILIZADO' : 'BORRADOR';
+
       asientoContable = await AsientoContable.create(
         {
           ...datosCabecera,
@@ -156,7 +159,9 @@ class ServicioContabilidad {
           totalDebe,
           totalHaber,
           creadoPor: idUsuario,
-          estado: "BORRADOR",
+          estado: estadoInicial,
+          aprobadoPor: estadoInicial === 'CONTABILIZADO' ? idUsuario : null,
+          fechaAprobacion: estadoInicial === 'CONTABILIZADO' ? new Date() : null,
         },
         { transaction: transaccion }
       );
@@ -387,6 +392,89 @@ class ServicioContabilidad {
   }
 
   /**
+   * Libro Mayor General - Todas las cuentas con movimientos
+   */
+  async obtenerLibroMayorGeneral(fechaInicio, fechaFin) {
+    const cuentas = await Cuenta.findAll({
+      where: {
+        permiteMovimiento: true,
+        estaActiva: true,
+      },
+      order: [["codigo", "ASC"]],
+    });
+
+    const librosMayores = [];
+
+    for (const cuenta of cuentas) {
+      const detalles = await DetalleAsientoContable.findAll({
+        where: {
+          cuentaId: cuenta.id,
+        },
+        include: [
+          {
+            model: AsientoContable,
+            as: "asientoContable",
+            where: {
+              fecha: {
+                [Op.between]: [fechaInicio, fechaFin],
+              },
+              estado: "CONTABILIZADO",
+            },
+            attributes: ["id", "numeroAsiento", "fecha", "descripcion", "tipo"],
+          },
+        ],
+        order: [
+          [{ model: AsientoContable, as: "asientoContable" }, "fecha", "ASC"],
+        ],
+      });
+
+      if (detalles.length > 0) {
+        let saldo = 0;
+        let totalDebe = 0;
+        let totalHaber = 0;
+
+        const movimientos = detalles.map((detalle) => {
+          const debe = parseFloat(detalle.debe);
+          const haber = parseFloat(detalle.haber);
+
+          totalDebe += debe;
+          totalHaber += haber;
+
+          if (["ACTIVO", "GASTO"].includes(cuenta.tipo)) {
+            saldo += debe - haber;
+          } else {
+            saldo += haber - debe;
+          }
+
+          return {
+            fecha: detalle.asientoContable.fecha,
+            numeroAsiento: detalle.asientoContable.numeroAsiento,
+            descripcion: detalle.asientoContable.descripcion,
+            debe,
+            haber,
+            saldo,
+          };
+        });
+
+        librosMayores.push({
+          cuenta: {
+            id: cuenta.id,
+            codigo: cuenta.codigo,
+            nombre: cuenta.nombre,
+            tipo: cuenta.tipo,
+          },
+          movimientos,
+          totalDebe,
+          totalHaber,
+          saldoFinal: saldo,
+        });
+      }
+    }
+
+    return librosMayores;
+  }
+
+  /**
    * Balance de Comprobación - Saldos de todas las cuentas
    */
   async obtenerBalanceComprobacion(fechaInicio, fechaFin) {
@@ -541,6 +629,25 @@ class ServicioContabilidad {
       }
     }
 
+    // Calcular Utilidad/Pérdida del Ejercicio (Ingresos - Gastos)
+    const estadoResultados = await this.obtenerEstadoResultados(
+      new Date(0), // Desde el inicio de los tiempos
+      fecha
+    );
+
+    const utilidadNeta = estadoResultados.utilidadNeta;
+
+    // Agregar Utilidad del Ejercicio al Patrimonio
+    if (utilidadNeta !== 0) {
+      saldos.PATRIMONIO.push({
+        codigo: "3.X.XX", // Código virtual
+        nombre: "Resultado del Ejercicio",
+        saldo: Math.abs(utilidadNeta),
+        esResultado: true,
+        tipoResultado: utilidadNeta >= 0 ? "GANANCIA" : "PERDIDA"
+      });
+    }
+
     // Calcular totales
     const totalActivo = saldos.ACTIVO.reduce(
       (suma, item) => suma + item.saldo,
@@ -551,9 +658,14 @@ class ServicioContabilidad {
       0
     );
     const totalPatrimonio = saldos.PATRIMONIO.reduce(
-      (suma, item) => suma + item.saldo,
+      (suma, item) => suma + (item.esResultado && item.tipoResultado === "PERDIDA" ? -item.saldo : item.saldo),
       0
     );
+
+    // Ajuste: Si es pérdida, resta del patrimonio. Si es ganancia, suma.
+    // En la lista visual se muestra positivo, pero en el cálculo total debe restar si es pérdida.
+    // Sin embargo, para el balanceo: Activo = Pasivo + Patrimonio.
+    // Si hay utilidad, Patrimonio aumenta. Si hay pérdida, Patrimonio disminuye.
 
     return {
       fecha,

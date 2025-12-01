@@ -6,7 +6,7 @@ const sequelize = new Sequelize({
   username: "postgres",
   password: "postgres",
   host: "localhost",
-  port: 5505,
+  port: 5510,
   define: {
     underscored: true, // Convierte automáticamente entre camelCase y snake_case
     freezeTableName: true, // Evita que Sequelize pluralice los nombres de tablas

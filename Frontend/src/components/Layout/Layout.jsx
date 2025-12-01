@@ -36,6 +36,11 @@ const Layout = ({ children }) => {
       icon: "🧾",
     },
     {
+      title: "Asientos Contables",
+      path: "/asientos-contables",
+      icon: "📒",
+    },
+    {
       title: "Contabilidad",
       path: "/contabilidad",
       icon: "💰",
@@ -58,9 +63,8 @@ const Layout = ({ children }) => {
             <Link
               key={item.path}
               to={item.path}
-              className={`nav-item ${
-                location.pathname === item.path ? "active" : ""
-              }`}
+              className={`nav-item ${location.pathname === item.path ? "active" : ""
+                }`}
             >
               <span className="nav-icon">{item.icon}</span>
               {sidebarOpen && <span className="nav-text">{item.title}</span>}
